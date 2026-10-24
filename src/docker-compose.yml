@@ -1,0 +1,77 @@
+name: microservicetest
+
+services:
+  host:
+    image: ${DOCKER_REGISTRY-}gtmotivemicroservicetesthost
+    build:
+      context: ..
+      dockerfile: src/GtMotive.Estimate.Microservice.Host/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__DefaultConnection: "Server=sql-database,1433;Database=rentcar;User Id=sa;Password=SqlServer_Dev_123!;TrustServerCertificate=True"
+      PathBase: /
+      Swagger__AuthFlow: AuthorizationCode
+      Swagger__EnableTryIt: "Yes"
+      Swagger__Authority: "http://localhost:18081/realms/microserviceTest"
+      Swagger__AuthorizationPath: /protocol/openid-connect/auth
+      Swagger__TokenPath: /protocol/openid-connect/token
+      Swagger__Scope: openid
+      Swagger__ClientId: swagger-ui
+      Swagger__ClientSecret: ""
+      AppSettings__JwtAuthority: "http://keycloak:8081/realms/microserviceTest"
+      Jwt__Issuer: "http://localhost:18081/realms/microserviceTest"
+    ports:
+      - "18080:8080"
+    depends_on:
+      sql-database:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - backend
+
+  sql-database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: "SqlServer_Dev_123!"
+    ports:
+      - "11433:1433"
+    volumes:
+      - sql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/1433' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - backend
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    command: start-dev --http-port=8081 --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://localhost:18081
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    ports:
+      - "18081:8081"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./keycloak/microserviceTest-realm.json:/opt/keycloak/data/import/microserviceTest-realm.json:ro
+    networks:
+      - backend
+
+volumes:
+  sql-data:
+    name: microservicetest-sql-data
+  keycloak-data:
+    name: microservicetest-keycloak-data
+
+networks:
+  backend:
+    driver: bridge

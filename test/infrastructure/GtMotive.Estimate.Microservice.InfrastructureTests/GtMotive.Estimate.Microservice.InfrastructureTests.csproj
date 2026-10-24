@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>1591</NoWarn>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Remove="Specs\**" />
+      <EmbeddedResource Remove="Specs\**" />
+      <None Remove="Specs\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Acheve.TestHost" />
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="9.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="..\..\Shared\IntegrationTestDatabase.cs" Link="Infrastructure\IntegrationTestDatabase.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\src\GtMotive.Estimate.Microservice.Api\GtMotive.Estimate.Microservice.Api.csproj" />
+        <ProjectReference Include="..\..\..\src\GtMotive.Estimate.Microservice.Infrastructure\GtMotive.Estimate.Microservice.Infrastructure.csproj" />
+    </ItemGroup>
+
+</Project>
